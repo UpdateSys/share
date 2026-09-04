@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشاركة الملفات والنصوص</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -152,6 +157,37 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 15px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .share-link {
             margin-top: 20px;
             padding: 15px;
@@ -284,10 +320,182 @@
             text-align: center;
             padding: 20px;
         }
+
+        /* Received content view */
+        .received {
+            margin-bottom: 20px;
+        }
+
+        .received-text {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            white-space: pre-wrap;
+            word-break: break-word;
+            direction: rtl;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .received-text-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .download-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #229954;
+        }
+
+        .received-files {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .received-files-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .received-file-item {
+            display: flex;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+            margin-bottom: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .received-file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .received-file-icon {
+            font-size: 40px;
+        }
+
+        .received-file-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .received-file-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .received-file-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .received-file-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .error-msg {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .expired-msg {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .setup-card {
+            margin-bottom: 20px;
+        }
+
+        .kbd {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-bottom: 3px solid #ccc;
+            border-radius: 3px;
+            color: #555;
+            padding: 2px 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .switch-btn-back {
+            background: #95a5a6;
+            color: white;
+            width: auto;
+            padding: 10px 25px;
+        }
+
+        /* Hide received content when not active */
+        .hidden {
+            display: none;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 25px;
+            border-radius: 8px;
+        }
+
+        .back-link a:hover {
+            background: rgba(255,255,255,0.3);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- ======================= RECEIVED VIEW (shown when opening a share link) ======================= -->
+    <div id="receivedView" class="container hidden">
+        <h1>📥 المحتوى المشترك</h1>
+        <div id="receivedContent"></div>
+        <div class="back-link">
+            <a href="javascript:void(0)" onclick="showMain()">⬅️ العودة للرئيسية</a>
+        </div>
+    </div>
+
+    <!-- ======================= MAIN APP ======================= -->
+    <div id="mainView" class="container">
         <h1>📤 مشاركة الملفات والنصوص</h1>
         
         <div class="tabs">
@@ -299,14 +507,20 @@
             <!-- Text Tab -->
             <div id="textTab" class="tab-content active">
                 <textarea id="textInput" placeholder="اكتب النص هنا..."></textarea>
-                <button class="btn btn-primary" onclick="shareText()">🔗 إنشاء رابط المشاركة</button>
+                <button class="btn btn-primary" onclick="shareText()" id="shareTextBtn">🔗 إنشاء رابط المشاركة</button>
+                
+                <div id="textLoading" class="loading">
+                    <div class="spinner"></div>
+                    جاري إنشاء الرابط...
+                </div>
                 
                 <div id="textShareLink" class="share-link">
-                    <label>رابط المشاركة:</label>
+                    <label>رابط المشاركة (شاركه مع أي شخص):</label>
                     <div class="share-link-content">
                         <input type="text" class="share-link-input" id="textLinkInput" readonly>
                         <button class="copy-btn" onclick="copyLink('textLinkInput')">📋 نسخ</button>
                     </div>
+                    <div style="margin-top:10px; font-size:13px; color:#888;">أي شخص يفتح هذا الرابط سيرى النص فوراً</div>
                 </div>
             </div>
 
@@ -315,7 +529,7 @@
                 <div class="file-upload" onclick="document.getElementById('fileInput').click()">
                     <div class="file-upload-icon">📤</div>
                     <div class="file-upload-text">اسحب الملفات هنا أو انقر للتحميل</div>
-                    <div class="file-upload-hint">جميع أنواع الملفات مدعومة</div>
+                    <div class="file-upload-hint">جميع أنواع الملفات مدعومة — الحد الأقصى 4 ميجابايت لكل ملف (المكتب المجاني)</div>
                 </div>
                 <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
                 
@@ -323,12 +537,18 @@
                 
                 <button class="btn btn-primary" onclick="shareFiles()" id="shareFileBtn" style="display:none;">🔗 مشاركة الملفات</button>
                 
+                <div id="fileLoading" class="loading">
+                    <div class="spinner"></div>
+                    جاري رفع الملفات...
+                </div>
+                
                 <div id="fileShareLink" class="share-link">
-                    <label>رابط المشاركة:</label>
+                    <label>رابط المشاركة (شاركه مع أي شخص):</label>
                     <div class="share-link-content">
                         <input type="text" class="share-link-input" id="fileLinkInput" readonly>
                         <button class="copy-btn" onclick="copyLink('fileLinkInput')">📋 نسخ</button>
                     </div>
+                    <div style="margin-top:10px; font-size:13px; color:#888;">أي شخص يفتح هذا الرابط سيرى الملفات ويمكنه تحميلها</div>
                 </div>
             </div>
         </div>
@@ -342,28 +562,147 @@
     </div>
 
     <script>
+        // ==================== FIREBASE CONFIG ====================
+        // ⚠️ استبدل الأكواد التالية بمفاتيح مشروعك من Firebase Console
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKwzzXvsP8P2FDzjYoUPrjpuIS2x0Xrd0",
+            authDomain: "share-e8654.firebaseapp.com",
+            databaseURL: "https://share-e8654-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "share-e8654",
+            storageBucket: "share-e8654.firebasestorage.app",
+            messagingSenderId: "531265630104",
+            appId: "1:531265630104:web:509d4444c59651f21685ed"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        // =========================================================
+
         let selectedFiles = [];
         let shareHistory = JSON.parse(localStorage.getItem('shareHistory') || '[]');
         
+        // Check URL for shared content
+        checkForShared();
+
         updateHistoryDisplay();
 
         // Drag and drop
         const fileUpload = document.querySelector('.file-upload');
         
-        fileUpload.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileUpload.classList.add('dragover');
-        });
-        
-        fileUpload.addEventListener('dragleave', () => {
-            fileUpload.classList.remove('dragover');
-        });
-        
-        fileUpload.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileUpload.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
+        if (fileUpload) {
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.classList.add('dragover');
+            });
+            
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.classList.remove('dragover');
+            });
+            
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        function checkForShared() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            
+            if (id) {
+                loadShared(id);
+            }
+        }
+
+        function loadShared(id) {
+            document.getElementById('mainView').classList.add('hidden');
+            const receivedView = document.getElementById('receivedView');
+            receivedView.classList.remove('hidden');
+            const content = document.getElementById('receivedContent');
+            content.innerHTML = '<div class="loading show"><div class="spinner"></div>جاري تحميل المحتوى...</div>';
+
+            database.ref('shares/' + id).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    content.innerHTML = '<div class="expired-msg">⚠️ هذا الرابط غير صالح أو تم حذفه.</div>';
+                    return;
+                }
+                
+                // Handle expired
+                if (data.expires && data.expires < Date.now()) {
+                    content.innerHTML = '<div class="expired-msg">⏰ انتهت صلاحية هذا الرابط.</div>';
+                    return;
+                }
+
+                if (data.type === 'text') {
+                    content.innerHTML = `
+                        <div class="received-text">
+                            <div class="received-text-title">📝 نص من المرسل:</div>
+                            <div>${escapeHtml(data.content)}</div>
+                        </div>
+                    `;
+                } else if (data.type === 'files') {
+                    let filesHtml = '<div class="received-files"><div class="received-files-title">📁 ملفات مشتركة (' + data.files.length + ')</div>';
+                    data.files.forEach((file, i) => {
+                        filesHtml += `
+                            <div class="received-file-item">
+                                <div class="received-file-info">
+                                    <span class="received-file-icon">${getFileIcon(file.type)}</span>
+                                    <div>
+                                        <div class="received-file-name">${escapeHtml(file.name)}</div>
+                                        <div class="received-file-size">${file.size} بايت</div>
+                                    </div>
+                                </div>
+                                <button class="received-file-btn" onclick="downloadFile('${id}', ${i})">⬇️ تحميل</button>
+                            </div>
+                        `;
+                    });
+                    filesHtml += '</div>';
+                    filesHtml += '<button class="download-btn" onclick="downloadAll(' + id + ')">📦 تحميل الكل</button>';
+                    content.innerHTML = filesHtml;
+                }
+            }).catch(() => {
+                content.innerHTML = '<div class="error-msg">حدث خطأ في تحميل المحتوى. تأكد من اتصال الإنترنت.</div>';
+            });
+        }
+
+        function showMain() {
+            document.getElementById('receivedView').classList.add('hidden');
+            document.getElementById('mainView').classList.remove('hidden');
+            // Remove query param from URL
+            history.replaceState({}, '', window.location.pathname);
+        }
+
+        function downloadAll(id) {
+            database.ref('shares/' + id).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+                data.files.forEach((file, i) => downloadFile(id, i));
+            });
+        }
+
+        function downloadFile(id, index) {
+            database.ref('shares/' + id).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (!data || !data.files || !data.files[index]) return;
+                const file = data.files[index];
+                
+                // File is stored as base64 data URL in the database
+                const a = document.createElement('a');
+                a.href = file.dataUrl;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -380,6 +719,10 @@
 
         function handleFiles(files) {
             for (let file of files) {
+                if (file.size > 4 * 1024 * 1024) {
+                    alert('الملف "' + file.name + '" أكبر من 4 ميجابايت، لن يتم إرفاقه.');
+                    continue;
+                }
                 if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
                     selectedFiles.push(file);
                 }
@@ -402,7 +745,7 @@
                 <div class="file-item">
                     <div class="file-info">
                         <span class="file-icon">${getFileIcon(file.type)}</span>
-                        <span class="file-name">${file.name}</span>
+                        <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${formatSize(file.size)})</span>
                     </div>
                     <button class="remove-btn" onclick="removeFile(${index})">×</button>
@@ -425,11 +768,12 @@
         }
 
         function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            if (bytes < 1024) return bytes + ' بايت';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' كيلوبايت';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' ميجابايت';
         }
 
+        // ==================== SHARE TEXT ====================
         function shareText() {
             const text = document.getElementById('textInput').value.trim();
             if (!text) {
@@ -437,42 +781,86 @@
                 return;
             }
             
-            const encoded = btoa(unescape(encodeURIComponent(text)));
-            const link = window.location.origin + window.location.pathname + '?type=text&data=' + encodeURIComponent(encoded);
-            
-            document.getElementById('textLinkInput').value = link;
-            document.getElementById('textShareLink').classList.add('show');
-            
-            addToHistory('نص', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+            if (text.length > 100000) {
+                alert('النص طويل جداً. الحد الأقصى 100,000 حرف.');
+                return;
+            }
+
+            const btn = document.getElementById('shareTextBtn');
+            const loading = document.getElementById('textLoading');
+            btn.disabled = true;
+            loading.classList.add('show');
+
+            const id = generateId();
+            const ref = database.ref('shares/' + id);
+
+            ref.set({
+                type: 'text',
+                content: text,
+                createdAt: Date.now(),
+                expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+            }).then(() => {
+                const link = buildShareUrl(id);
+                document.getElementById('textLinkInput').value = link;
+                document.getElementById('textShareLink').classList.add('show');
+                btn.disabled = false;
+                loading.classList.remove('show');
+                addToHistory('نص', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+            }).catch((error) => {
+                btn.disabled = false;
+                loading.classList.remove('show');
+                alert('خطأ في المشاركة: ' + error.message);
+            });
         }
 
+        // ==================== SHARE FILES ====================
         async function shareFiles() {
             if (selectedFiles.length === 0) return;
             
-            const fileData = [];
-            for (let file of selectedFiles) {
-                const base64 = await readFileAsBase64(file);
-                fileData.push({
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    data: base64
+            const btn = document.getElementById('shareFileBtn');
+            const loading = document.getElementById('fileLoading');
+            btn.disabled = true;
+            loading.classList.add('show');
+
+            const id = generateId();
+            
+            try {
+                const fileRecords = [];
+                
+                // Convert each file to base64 data URL and store in Realtime Database
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const dataUrl = await readFileAsBase64(file);
+                    
+                    fileRecords.push({
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        dataUrl: dataUrl
+                    });
+                }
+                
+                // Save everything in Realtime Database (no Storage needed)
+                await database.ref('shares/' + id).set({
+                    type: 'files',
+                    files: fileRecords,
+                    createdAt: Date.now(),
+                    expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
                 });
+                
+                const link = buildShareUrl(id);
+                document.getElementById('fileLinkInput').value = link;
+                document.getElementById('fileShareLink').classList.add('show');
+                
+                const fileNames = selectedFiles.map(f => f.name).join(', ');
+                addToHistory('ملفات', fileNames);
+        
+            } catch (error) {
+                alert('خطأ في رفع الملفات: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('show');
             }
-            
-            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(fileData))));
-            
-            // For large files, we'd need a backend. For demo, we'll use localStorage
-            const link = window.location.origin + window.location.pathname + '?type=files&count=' + selectedFiles.length;
-            
-            // Store in localStorage for demo (in production, use a backend)
-            localStorage.setItem('sharedFiles', JSON.stringify(fileData));
-            
-            document.getElementById('fileLinkInput').value = link;
-            document.getElementById('fileShareLink').classList.add('show');
-            
-            const fileNames = selectedFiles.map(f => f.name).join(', ');
-            addToHistory('ملفات', fileNames);
         }
 
         function readFileAsBase64(file) {
@@ -482,6 +870,14 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        }
+
+        function buildShareUrl(id) {
+            return window.location.origin + window.location.pathname + '?id=' + id;
         }
 
         function copyLink(inputId) {
@@ -520,39 +916,11 @@
             historyList.innerHTML = shareHistory.map(item => `
                 <div class="history-item">
                     <div class="history-item-type">${item.type === 'نص' ? '📝' : '📁'} ${item.type}</div>
-                    <div class="history-item-content">${item.content}</div>
+                    <div class="history-item-content">${escapeHtml(item.content)}</div>
                     <div class="history-item-time">${item.time}</div>
                 </div>
             `).join('');
         }
-
-        // Check for shared content on page load
-        window.onload = function() {
-            const params = new URLSearchParams(window.location.search);
-            const type = params.get('type');
-            
-            if (type === 'text') {
-                const data = params.get('data');
-                if (data) {
-                    try {
-                        const decoded = decodeURIComponent(escape(atob(data)));
-                        document.getElementById('textInput').value = decoded;
-                        switchTab('text');
-                    } catch (e) {
-                        console.error('Error decoding text');
-                    }
-                }
-            } else if (type === 'files') {
-                const stored = localStorage.getItem('sharedFiles');
-                if (stored) {
-                    const files = JSON.parse(stored);
-                    alert('تم استيراد ' + files.length + ' ملف(ات):\n' + files.map(f => f.name).join('\n'));
-                    
-                    // Here you would typically show download buttons
-                    // For a real app, you'd need a backend to store files
-                }
-            }
-        };
     </script>
 </body>
 </html>
