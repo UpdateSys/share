@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشاركة الملفات والنصوص</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab-btn.active:hover {
+            background: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            font-family: inherit;
+            direction: rtl;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-upload {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            background: #f5f5ff;
+        }
+
+        .file-upload.dragover {
+            background: #e8e8ff;
+            border-color: #764ba2;
+        }
+
+        .file-upload-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .file-upload-text {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .file-upload-hint {
+            color: #999;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .share-link {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .share-link.show {
+            display: block;
+        }
+
+        .share-link label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .share-link-content {
+            display: flex;
+            gap: 10px;
+        }
+
+        .share-link-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .copy-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-title {
+            color: white;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .history-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .history-item-type {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .history-item-content {
+            margin-top: 5px;
+            word-break: break-all;
+        }
+
+        .history-item-time {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .empty-history {
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 مشاركة الملفات والنصوص</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('text')">📝 نص</button>
+            <button class="tab-btn" onclick="switchTab('file')">📁 ملف</button>
+        </div>
+
+        <div class="card">
+            <!-- Text Tab -->
+            <div id="textTab" class="tab-content active">
+                <textarea id="textInput" placeholder="اكتب النص هنا..."></textarea>
+                <button class="btn btn-primary" onclick="shareText()">🔗 إنشاء رابط المشاركة</button>
+                
+                <div id="textShareLink" class="share-link">
+                    <label>رابط المشاركة:</label>
+                    <div class="share-link-content">
+                        <input type="text" class="share-link-input" id="textLinkInput" readonly>
+                        <button class="copy-btn" onclick="copyLink('textLinkInput')">📋 نسخ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Tab -->
+            <div id="fileTab" class="tab-content">
+                <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                    <div class="file-upload-icon">📤</div>
+                    <div class="file-upload-text">اسحب الملفات هنا أو انقر للتحميل</div>
+                    <div class="file-upload-hint">جميع أنواع الملفات مدعومة</div>
+                </div>
+                <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
+                
+                <div id="fileList" class="file-list"></div>
+                
+                <button class="btn btn-primary" onclick="shareFiles()" id="shareFileBtn" style="display:none;">🔗 مشاركة الملفات</button>
+                
+                <div id="fileShareLink" class="share-link">
+                    <label>رابط المشاركة:</label>
+                    <div class="share-link-content">
+                        <input type="text" class="share-link-input" id="fileLinkInput" readonly>
+                        <button class="copy-btn" onclick="copyLink('fileLinkInput')">📋 نسخ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <div class="history-title">📜 سجل المشاركات</div>
+            <div id="historyList">
+                <div class="empty-history">لا توجد مشاركات سابقة</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let shareHistory = JSON.parse(localStorage.getItem('shareHistory') || '[]');
+        
+        updateHistoryDisplay();
+
+        // Drag and drop
+        const fileUpload = document.querySelector('.file-upload');
+        
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+        
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+        
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'text') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('textTab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('fileTab').classList.add('active');
+            }
+        }
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                    selectedFiles.push(file);
+                }
+            }
+            displayFiles();
+        }
+
+        function displayFiles() {
+            const fileList = document.getElementById('fileList');
+            const shareBtn = document.getElementById('shareFileBtn');
+            
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                shareBtn.style.display = 'none';
+                return;
+            }
+            
+            shareBtn.style.display = 'block';
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <span class="file-icon">${getFileIcon(file.type)}</span>
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">(${formatSize(file.size)})</span>
+                    </div>
+                    <button class="remove-btn" onclick="removeFile(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+        }
+
+        function getFileIcon(type) {
+            if (type.startsWith('image/')) return '🖼️';
+            if (type.startsWith('video/')) return '🎬';
+            if (type.startsWith('audio/')) return '🎵';
+            if (type.includes('pdf')) return '📄';
+            if (type.includes('zip') || type.includes('rar')) return '📦';
+            return '📁';
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function shareText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                alert('الرجاء كتابة نص أولاً');
+                return;
+            }
+            
+            const encoded = btoa(unescape(encodeURIComponent(text)));
+            const link = window.location.origin + window.location.pathname + '?type=text&data=' + encodeURIComponent(encoded);
+            
+            document.getElementById('textLinkInput').value = link;
+            document.getElementById('textShareLink').classList.add('show');
+            
+            addToHistory('نص', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+        }
+
+        async function shareFiles() {
+            if (selectedFiles.length === 0) return;
+            
+            const fileData = [];
+            for (let file of selectedFiles) {
+                const base64 = await readFileAsBase64(file);
+                fileData.push({
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: base64
+                });
+            }
+            
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(fileData))));
+            
+            // For large files, we'd need a backend. For demo, we'll use localStorage
+            const link = window.location.origin + window.location.pathname + '?type=files&count=' + selectedFiles.length;
+            
+            // Store in localStorage for demo (in production, use a backend)
+            localStorage.setItem('sharedFiles', JSON.stringify(fileData));
+            
+            document.getElementById('fileLinkInput').value = link;
+            document.getElementById('fileShareLink').classList.add('show');
+            
+            const fileNames = selectedFiles.map(f => f.name).join(', ');
+            addToHistory('ملفات', fileNames);
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function copyLink(inputId) {
+            const input = document.getElementById(inputId);
+            input.select();
+            document.execCommand('copy');
+            
+            const btn = input.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ تم النسخ';
+            setTimeout(() => btn.textContent = originalText, 2000);
+        }
+
+        function addToHistory(type, content) {
+            const item = {
+                type,
+                content,
+                time: new Date().toLocaleString('ar-SA')
+            };
+            
+            shareHistory.unshift(item);
+            if (shareHistory.length > 10) shareHistory.pop();
+            
+            localStorage.setItem('shareHistory', JSON.stringify(shareHistory));
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('historyList');
+            
+            if (shareHistory.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">لا توجد مشاركات سابقة</div>';
+                return;
+            }
+            
+            historyList.innerHTML = shareHistory.map(item => `
+                <div class="history-item">
+                    <div class="history-item-type">${item.type === 'نص' ? '📝' : '📁'} ${item.type}</div>
+                    <div class="history-item-content">${item.content}</div>
+                    <div class="history-item-time">${item.time}</div>
+                </div>
+            `).join('');
+        }
+
+        // Check for shared content on page load
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type');
+            
+            if (type === 'text') {
+                const data = params.get('data');
+                if (data) {
+                    try {
+                        const decoded = decodeURIComponent(escape(atob(data)));
+                        document.getElementById('textInput').value = decoded;
+                        switchTab('text');
+                    } catch (e) {
+                        console.error('Error decoding text');
+                    }
+                }
+            } else if (type === 'files') {
+                const stored = localStorage.getItem('sharedFiles');
+                if (stored) {
+                    const files = JSON.parse(stored);
+                    alert('تم استيراد ' + files.length + ' ملف(ات):\n' + files.map(f => f.name).join('\n'));
+                    
+                    // Here you would typically show download buttons
+                    // For a real app, you'd need a backend to store files
+                }
+            }
+        };
+    </script>
+</body>
+</html>
