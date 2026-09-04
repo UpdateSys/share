@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مشاركة الملفات والنصوص</title>
+    <title>مشاركة الملفات والنصوص 2</title>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -31,8 +30,33 @@
         h1 {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 5px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .live-badge {
+            text-align: center;
+            color: #a5ffb0;
+            font-size: 14px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #2ecc71;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            100% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
         }
 
         .tabs {
@@ -83,7 +107,7 @@
 
         textarea {
             width: 100%;
-            height: 200px;
+            height: 150px;
             padding: 15px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
@@ -94,6 +118,21 @@
         }
 
         textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            direction: rtl;
+        }
+
+        .name-input:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -143,7 +182,7 @@
             border-radius: 10px;
             font-size: 18px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 15px;
             transition: all 0.3s;
         }
 
@@ -186,54 +225,6 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        .share-link {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .share-link.show {
-            display: block;
-        }
-
-        .share-link label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .share-link-content {
-            display: flex;
-            gap: 10px;
-        }
-
-        .share-link-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            direction: ltr;
-            text-align: left;
-        }
-
-        .copy-btn {
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .copy-btn:hover {
-            background: #5a6fd6;
         }
 
         .file-list {
@@ -281,289 +272,274 @@
             font-size: 18px;
         }
 
-        .history-section {
+        /* ============ LIVE FEED ============ */
+        .feed-section {
             margin-top: 30px;
         }
 
-        .history-title {
+        .feed-title {
             color: white;
             font-size: 20px;
             margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .history-item {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            color: white;
+        .feed-count {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 14px;
         }
 
-        .history-item-type {
-            font-size: 12px;
-            opacity: 0.8;
+        .feed-items {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 5px;
         }
 
-        .history-item-content {
-            margin-top: 5px;
-            word-break: break-all;
-        }
-
-        .history-item-time {
-            font-size: 12px;
-            opacity: 0.6;
-            margin-top: 5px;
-        }
-
-        .empty-history {
-            color: rgba(255,255,255,0.6);
+        .feed-empty {
+            color: rgba(255,255,255,0.7);
             text-align: center;
-            padding: 20px;
+            padding: 30px;
+            font-size: 16px;
         }
 
-        /* Received content view */
-        .received {
-            margin-bottom: 20px;
-        }
-
-        .received-text {
+        .feed-card {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .feed-username {
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feed-user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .feed-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .feed-text {
+            background: #f5f5ff;
+            padding: 12px;
+            border-radius: 8px;
             white-space: pre-wrap;
             word-break: break-word;
             direction: rtl;
-            font-size: 16px;
-            line-height: 1.8;
+            font-size: 15px;
+            line-height: 1.7;
         }
 
-        .received-text-title {
+        .feed-files-title {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .feed-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .feed-file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .feed-file-name {
             font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
+            color: #333;
+            word-break: break-all;
         }
 
-        .download-btn {
+        .feed-file-size {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .feed-download {
             background: #27ae60;
             color: white;
             border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 8px 15px;
+            border-radius: 6px;
             cursor: pointer;
-            margin-top: 10px;
-            transition: all 0.3s;
+            font-size: 13px;
+            white-space: nowrap;
         }
 
-        .download-btn:hover {
+        .feed-download:hover {
             background: #229954;
         }
 
-        .received-files {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        .received-files-title {
-            font-weight: bold;
+        .feed-type-badge {
+            font-size: 11px;
+            background: rgba(102,126,234,0.15);
             color: #667eea;
-            margin-bottom: 15px;
-        }
-
-        .received-file-item {
-            display: flex;
-            background: white;
-            padding: 15px;
+            padding: 3px 8px;
             border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
-            margin-bottom: 15px;
-            align-items: center;
-            justify-content: space-between;
+            margin-left: 8px;
         }
 
-        .received-file-info {
+        .feed-actions {
+            margin-top: 10px;
             display: flex;
-            align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .received-file-icon {
-            font-size: 40px;
-        }
-
-        .received-file-name {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .received-file-size {
+        .feed-action-btn {
+            background: none;
+            border: 1px solid #ddd;
             color: #666;
-            font-size: 14px;
-        }
-
-        .received-file-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 14px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.3s;
         }
 
-        .received-file-btn:hover {
-            background: #5a6fd6;
+        .feed-action-btn:hover {
+            background: #f0f0f0;
         }
 
-        .error-msg {
+        .feed-action-btn.danger:hover {
             background: #ffebee;
             color: #c62828;
-            padding: 15px;
+            border-color: #ffcdd2;
+        }
+
+        .delete-password-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 14px;
+            direction: rtl;
         }
 
-        .expired-msg {
-            background: #fff3e0;
-            color: #e65100;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        .setup-card {
-            margin-bottom: 20px;
-        }
-
-        .kbd {
-            background: #f4f4f4;
-            border: 1px solid #ddd;
-            border-bottom: 3px solid #ccc;
-            border-radius: 3px;
-            color: #555;
-            padding: 2px 5px;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-
-        .switch-btn-back {
-            background: #95a5a6;
+        .connection-banner {
+            background: #ff9800;
             color: white;
-            width: auto;
-            padding: 10px 25px;
-        }
-
-        /* Hide received content when not active */
-        .hidden {
-            display: none;
-        }
-
-        .back-link {
             text-align: center;
-            margin-top: 20px;
-        }
-
-        .back-link a {
-            color: white;
-            text-decoration: none;
-            background: rgba(255,255,255,0.2);
-            padding: 10px 25px;
+            padding: 10px;
             border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
         }
 
-        .back-link a:hover {
-            background: rgba(255,255,255,0.3);
+        .scroll-top {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            font-size: 20px;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- ======================= RECEIVED VIEW (shown when opening a share link) ======================= -->
-    <div id="receivedView" class="container hidden">
-        <h1>📥 المحتوى المشترك</h1>
-        <div id="receivedContent"></div>
-        <div class="back-link">
-            <a href="javascript:void(0)" onclick="showMain()">⬅️ العودة للرئيسية</a>
-        </div>
-    </div>
+    <div class="container">
+        <h1>📤 مشاركة الملفات والنصوص 2</h1>
+        <div class="live-badge"><span class="live-dot"></span> مباشر — كل ما يُنشر يظهر فوراً للجميع</div>
 
-    <!-- ======================= MAIN APP ======================= -->
-    <div id="mainView" class="container">
-        <h1>📤 مشاركة الملفات والنصوص 1</h1>
-        
+        <div id="offlineBanner" class="connection-banner">⚠️ تعذر الاتصال — يرجى التحقق من الإنترنت</div>
+
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('text')">📝 نص</button>
-            <button class="tab-btn" onclick="switchTab('file')">📁 ملف</button>
+            <button class="tab-btn active" onclick="switchTab('text')">📝 كتابة نص</button>
+            <button class="tab-btn" onclick="switchTab('file')">📁 رفع ملف</button>
         </div>
 
         <div class="card">
             <!-- Text Tab -->
             <div id="textTab" class="tab-content active">
-                <textarea id="textInput" placeholder="اكتب النص هنا..."></textarea>
-                <button class="btn btn-primary" onclick="shareText()" id="shareTextBtn">🔗 إنشاء رابط المشاركة</button>
-                
-                <div id="textLoading" class="loading">
-                    <div class="spinner"></div>
-                    جاري إنشاء الرابط...
-                </div>
-                
-                <div id="textShareLink" class="share-link">
-                    <label>رابط المشاركة (شاركه مع أي شخص):</label>
-                    <div class="share-link-content">
-                        <input type="text" class="share-link-input" id="textLinkInput" readonly>
-                        <button class="copy-btn" onclick="copyLink('textLinkInput')">📋 نسخ</button>
-                    </div>
-                    <div style="margin-top:10px; font-size:13px; color:#888;">أي شخص يفتح هذا الرابط سيرى النص فوراً</div>
-                </div>
+                <input type="text" class="name-input" id="textName" placeholder="اسمك (اختياري)">
+
+                <textarea id="textInput" placeholder="اكتب نصك هنا... سيظهر للجميع فوراً"></textarea>
+                <button class="btn btn-primary" onclick="publishText()" id="pubTextBtn">📤 نشر النص</button>
             </div>
 
             <!-- File Tab -->
             <div id="fileTab" class="tab-content">
+                <input type="text" class="name-input" id="fileName" placeholder="اسمك (اختياري)">
+
                 <div class="file-upload" onclick="document.getElementById('fileInput').click()">
                     <div class="file-upload-icon">📤</div>
-                    <div class="file-upload-text">اسحب الملفات هنا أو انقر للتحميل</div>
-                    <div class="file-upload-hint">جميع أنواع الملفات مدعومة — الحد الأقصى 4 ميجابايت لكل ملف (المكتب المجاني)</div>
+                    <div class="file-upload-text">اختر الملفات للرفع</div>
+                    <div class="file-upload-hint">الحد الأقصى 4 ميجابايت لكل ملف — سيظهر للجميع فوراً</div>
                 </div>
                 <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
                 
                 <div id="fileList" class="file-list"></div>
                 
-                <button class="btn btn-primary" onclick="shareFiles()" id="shareFileBtn" style="display:none;">🔗 مشاركة الملفات</button>
+                <button class="btn btn-primary" onclick="publishFiles()" id="pubFileBtn" style="display:none;">📤 نشر الملفات</button>
                 
                 <div id="fileLoading" class="loading">
                     <div class="spinner"></div>
                     جاري رفع الملفات...
                 </div>
-                
-                <div id="fileShareLink" class="share-link">
-                    <label>رابط المشاركة (شاركه مع أي شخص):</label>
-                    <div class="share-link-content">
-                        <input type="text" class="share-link-input" id="fileLinkInput" readonly>
-                        <button class="copy-btn" onclick="copyLink('fileLinkInput')">📋 نسخ</button>
-                    </div>
-                    <div style="margin-top:10px; font-size:13px; color:#888;">أي شخص يفتح هذا الرابط سيرى الملفات ويمكنه تحميلها</div>
-                </div>
             </div>
         </div>
 
-        <div class="history-section">
-            <div class="history-title">📜 سجل المشاركات</div>
-            <div id="historyList">
-                <div class="empty-history">لا توجد مشاركات سابقة</div>
+        <div class="feed-section">
+            <div class="feed-title">📜 المحتوى المشترك الآن <span class="feed-count" id="feedCount">0</span></div>
+            <div id="feed" class="feed-items">
+                <div class="feed-empty" id="feedEmpty">لا يوجد محتوى بعد — كن أول من يشارك 📢</div>
             </div>
         </div>
     </div>
 
+    <button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️</button>
+
     <script>
         // ==================== FIREBASE CONFIG ====================
-        // ⚠️ استبدل الأكواد التالية بمفاتيح مشروعك من Firebase Console
         const firebaseConfig = {
             apiKey: "AIzaSyCKwzzXvsP8P2FDzjYoUPrjpuIS2x0Xrd0",
             authDomain: "share-e8654.firebaseapp.com",
@@ -576,119 +552,150 @@
         
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const feedRef = database.ref('feed');
         // =========================================================
 
+        const MAX_TEXT_LENGTH = 100000;
+        const MAX_FILE_SIZE = 4 * 1024 * 1024;
+        const KEEP_DAYS = 7;
+
         let selectedFiles = [];
-        let shareHistory = JSON.parse(localStorage.getItem('shareHistory') || '[]');
-        
-        // Check URL for shared content
-        checkForShared();
+        let connected = true;
 
-        updateHistoryDisplay();
-
-        // Drag and drop
-        const fileUpload = document.querySelector('.file-upload');
-        
-        if (fileUpload) {
-            fileUpload.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                fileUpload.classList.add('dragover');
-            });
-            
-            fileUpload.addEventListener('dragleave', () => {
-                fileUpload.classList.remove('dragover');
-            });
-            
-            fileUpload.addEventListener('drop', (e) => {
-                e.preventDefault();
-                fileUpload.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
-            });
-        }
-
-        function checkForShared() {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id');
-            
-            if (id) {
-                loadShared(id);
+        // ============ CONNECTION STATUS ============
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+            connected = snap.val();
+            if (!connected) {
+                document.getElementById('offlineBanner').style.display = 'block';
+            } else {
+                document.getElementById('offlineBanner').style.display = 'none';
             }
+        });
+
+        // ============ LIVE FEED LISTENER ============
+        feedRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+            renderFeed(snapshot);
+        });
+
+        handleRootListener();
+
+        function handleRootListener() {
+            database.ref('.info/serverTimeOffset').once('value').catch(() => {});
         }
 
-        function loadShared(id) {
-            document.getElementById('mainView').classList.add('hidden');
-            const receivedView = document.getElementById('receivedView');
-            receivedView.classList.remove('hidden');
-            const content = document.getElementById('receivedContent');
-            content.innerHTML = '<div class="loading show"><div class="spinner"></div>جاري تحميل المحتوى...</div>';
+        function renderFeed(snapshot) {
+            const feed = document.getElementById('feed');
+            const count = document.getElementById('feedCount');
+            
+            if (!snapshot.exists()) {
+                feed.innerHTML = '<div class="feed-empty" id="feedEmpty">لا يوجد محتوى بعد — كن أول من يشارك 📢</div>';
+                count.textContent = '0';
+                return;
+            }
+            
+            // Build items array sorted by timestamp (newest last, newest first in display)
+            const items = [];
+            snapshot.forEach((child) => {
+                items.push({ key: child.key, ...child.val() });
+            });
+            
+            // Remove expired items from display and optionally from database
+            const now = Date.now();
+            const validItems = items.filter(item => !item.expires || item.expires > now);
+            
+            // Sort newest first
+            validItems.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            count.textContent = validItems.length;
+            
+            if (validItems.length === 0) {
+                feed.innerHTML = '<div class="feed-empty" id="feedEmpty">لا يوجد محتوى بعد — كن أول من يشارك 📢</div>';
+                return;
+            }
+            
+            feed.innerHTML = validItems.map(item => buildFeedCard(item)).join('');
+        }
 
-            database.ref('shares/' + id).once('value').then((snapshot) => {
-                const data = snapshot.val();
-                if (!data) {
-                    content.innerHTML = '<div class="expired-msg">⚠️ هذا الرابط غير صالح أو تم حذفه.</div>';
-                    return;
-                }
-                
-                // Handle expired
-                if (data.expires && data.expires < Date.now()) {
-                    content.innerHTML = '<div class="expired-msg">⏰ انتهت صلاحية هذا الرابط.</div>';
-                    return;
-                }
-
-                if (data.type === 'text') {
-                    content.innerHTML = `
-                        <div class="received-text">
-                            <div class="received-text-title">📝 نص من المرسل:</div>
-                            <div>${escapeHtml(data.content)}</div>
+        function buildFeedCard(item) {
+            const user = escapeHtml(item.name || 'زائر');
+            const avatar = user.charAt(0);
+            const time = formatTime(item.timestamp);
+            
+            let body = '';
+            
+            if (item.type === 'text' && item.text) {
+                body = `<div class="feed-text">${escapeHtml(item.text)}</div>`;
+            } else if (item.type === 'files' && item.files && item.files.length) {
+                body = `<div class="feed-files-title">📁 ${item.files.length} ملف</div>`;
+                item.files.forEach((file, i) => {
+                    body += `
+                        <div class="feed-file-item">
+                            <div class="feed-file-info">
+                                <span class="file-icon">${getFileIcon(file.type)}</span>
+                                <div style="min-width:0;">
+                                    <div class="feed-file-name">${escapeHtml(file.name)}</div>
+                                    <div class="feed-file-size">${formatSize(file.size)}</div>
+                                </div>
+                            </div>
+                            <button class="feed-download" onclick="downloadFileFromData('${item.key}', ${i})">⬇️ تحميل</button>
                         </div>
                     `;
-                } else if (data.type === 'files') {
-                    let filesHtml = '<div class="received-files"><div class="received-files-title">📁 ملفات مشتركة (' + data.files.length + ')</div>';
-                    data.files.forEach((file, i) => {
-                        filesHtml += `
-                            <div class="received-file-item">
-                                <div class="received-file-info">
-                                    <span class="received-file-icon">${getFileIcon(file.type)}</span>
-                                    <div>
-                                        <div class="received-file-name">${escapeHtml(file.name)}</div>
-                                        <div class="received-file-size">${file.size} بايت</div>
-                                    </div>
-                                </div>
-                                <button class="received-file-btn" onclick="downloadFile('${id}', ${i})">⬇️ تحميل</button>
-                            </div>
-                        `;
-                    });
-                    filesHtml += '</div>';
-                    filesHtml += '<button class="download-btn" onclick="downloadAll(' + id + ')">📦 تحميل الكل</button>';
-                    content.innerHTML = filesHtml;
-                }
-            }).catch(() => {
-                content.innerHTML = '<div class="error-msg">حدث خطأ في تحميل المحتوى. تأكد من اتصال الإنترنت.</div>';
+                });
+            }
+            
+            const typeBadge = item.type === 'text' ? 'نص' : 'ملفات';
+            
+            return `
+                <div class="feed-card" data-key="${item.key}">
+                    <div class="feed-header">
+                        <div class="feed-username">
+                            <span class="feed-user-avatar">${avatar}</span>
+                            ${user}
+                            <span class="feed-type-badge">${typeBadge}</span>
+                        </div>
+                        <span class="feed-time">${time}</span>
+                    </div>
+                    ${body}
+                    <div class="feed-actions">
+                        <button class="feed-action-btn" onclick="toggleDelete('${item.key}')">🗑️ حذف</button>
+                    </div>
+                    <div id="deleteBox_${item.key}" style="display:none;">
+                        <input type="password" class="delete-password-input" id="delPass_${item.key}" placeholder="كلمة المرور للمشرف (اختياري — اتركه فارغاً للحذف الفوري)">
+                        <button class="btn btn-primary" style="margin-top:10px; background:#e74c3c;" onclick="deleteItem('${item.key}')">تأكيد الحذف</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleDelete(key) {
+            const box = document.getElementById('deleteBox_' + key);
+            if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function deleteItem(key) {
+            const pass = document.getElementById('delPass_' + key)?.value || '';
+            if (pass && pass !== ADMIN_PASSWORD) {
+                alert('كلمة المرور غير صحيحة');
+                return;
+            }
+            
+            if (pass !== ADMIN_PASSWORD && !pass) {
+                // Allow anyone to delete their own posts - for now allow delete (test mode)
+            }
+            
+            feedRef.child(key).remove().then(() => {
+                alert('تم الحذف');
+            }).catch((err) => {
+                alert('فشل الحذف: ' + err.message);
             });
         }
 
-        function showMain() {
-            document.getElementById('receivedView').classList.add('hidden');
-            document.getElementById('mainView').classList.remove('hidden');
-            // Remove query param from URL
-            history.replaceState({}, '', window.location.pathname);
-        }
-
-        function downloadAll(id) {
-            database.ref('shares/' + id).once('value').then((snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
-                data.files.forEach((file, i) => downloadFile(id, i));
-            });
-        }
-
-        function downloadFile(id, index) {
-            database.ref('shares/' + id).once('value').then((snapshot) => {
-                const data = snapshot.val();
+        function downloadFileFromData(key, index) {
+            feedRef.child(key).once('value').then((snap) => {
+                const data = snap.val();
                 if (!data || !data.files || !data.files[index]) return;
                 const file = data.files[index];
-                
-                // File is stored as base64 data URL in the database
                 const a = document.createElement('a');
                 a.href = file.dataUrl;
                 a.download = file.name;
@@ -698,28 +705,102 @@
             });
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        // If you want a real admin password, change this and add a delete flow
+        const ADMIN_PASSWORD = '';
+
+        // ============ PUBLISH TEXT ============
+        function publishText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                alert('اكتب نصاً أولاً');
+                return;
+            }
+            if (text.length > MAX_TEXT_LENGTH) {
+                alert('النص طويل جداً');
+                return;
+            }
+            
+            const btn = document.getElementById('pubTextBtn');
+            btn.disabled = true;
+            
+            const name = getSafeName(document.getElementById('textName').value);
+            
+            feedRef.push({
+                type: 'text',
+                text: text,
+                name: name,
+                timestamp: Date.now(),
+                expires: Date.now() + (KEEP_DAYS * 24 * 60 * 60 * 1000)
+            }).then(() => {
+                document.getElementById('textInput').value = '';
+                btn.disabled = false;
+            }).catch((err) => {
+                btn.disabled = false;
+                alert('فشل النشر: ' + err.message);
+            });
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        // ============ PUBLISH FILES ============
+        async function publishFiles() {
+            if (selectedFiles.length === 0) return;
             
-            if (tab === 'text') {
-                document.querySelector('.tab-btn:first-child').classList.add('active');
-                document.getElementById('textTab').classList.add('active');
-            } else {
-                document.querySelector('.tab-btn:last-child').classList.add('active');
-                document.getElementById('fileTab').classList.add('active');
+            const btn = document.getElementById('pubFileBtn');
+            const loading = document.getElementById('fileLoading');
+            btn.disabled = true;
+            loading.classList.add('show');
+            
+            try {
+                const fileRecords = [];
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const dataUrl = await readFileAsBase64(file);
+                    fileRecords.push({
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        dataUrl: dataUrl
+                    });
+                }
+                
+                const name = getSafeName(document.getElementById('fileName').value);
+                
+                await feedRef.push({
+                    type: 'files',
+                    files: fileRecords,
+                    name: name,
+                    timestamp: Date.now(),
+                    expires: Date.now() + (KEEP_DAYS * 24 * 60 * 60 * 1000)
+                });
+                
+                selectedFiles = [];
+                displayFiles();
+            } catch (err) {
+                alert('فشل رفع الملفات: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('show');
             }
+        }
+
+        // ============ HELPERS ============
+        function getSafeName(value) {
+            const v = (value || '').trim();
+            if (!v) return 'زائر';
+            return v.substring(0, 40);
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
 
         function handleFiles(files) {
             for (let file of files) {
-                if (file.size > 4 * 1024 * 1024) {
+                if (file.size > MAX_FILE_SIZE) {
                     alert('الملف "' + file.name + '" أكبر من 4 ميجابايت، لن يتم إرفاقه.');
                     continue;
                 }
@@ -732,7 +813,7 @@
 
         function displayFiles() {
             const fileList = document.getElementById('fileList');
-            const shareBtn = document.getElementById('shareFileBtn');
+            const shareBtn = document.getElementById('pubFileBtn');
             
             if (selectedFiles.length === 0) {
                 fileList.innerHTML = '';
@@ -758,6 +839,37 @@
             displayFiles();
         }
 
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'text') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('textTab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('fileTab').classList.add('active');
+            }
+        }
+
+        // Drag and drop
+        const fileUpload = document.querySelector('.file-upload');
+        
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+        
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+        
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
         function getFileIcon(type) {
             if (type.startsWith('image/')) return '🖼️';
             if (type.startsWith('video/')) return '🎬';
@@ -773,154 +885,32 @@
             return (bytes / (1024 * 1024)).toFixed(1) + ' ميجابايت';
         }
 
-        // ==================== SHARE TEXT ====================
-        function shareText() {
-            const text = document.getElementById('textInput').value.trim();
-            if (!text) {
-                alert('الرجاء كتابة نص أولاً');
-                return;
-            }
-            
-            if (text.length > 100000) {
-                alert('النص طويل جداً. الحد الأقصى 100,000 حرف.');
-                return;
-            }
-
-            const btn = document.getElementById('shareTextBtn');
-            const loading = document.getElementById('textLoading');
-            btn.disabled = true;
-            loading.classList.add('show');
-
-            const id = generateId();
-            const ref = database.ref('shares/' + id);
-
-            ref.set({
-                type: 'text',
-                content: text,
-                createdAt: Date.now(),
-                expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
-            }).then(() => {
-                const link = buildShareUrl(id);
-                document.getElementById('textLinkInput').value = link;
-                document.getElementById('textShareLink').classList.add('show');
-                btn.disabled = false;
-                loading.classList.remove('show');
-                addToHistory('نص', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
-            }).catch((error) => {
-                btn.disabled = false;
-                loading.classList.remove('show');
-                alert('خطأ في المشاركة: ' + error.message);
-            });
+        function formatTime(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            return d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
         }
 
-        // ==================== SHARE FILES ====================
-        async function shareFiles() {
-            if (selectedFiles.length === 0) return;
-            
-            const btn = document.getElementById('shareFileBtn');
-            const loading = document.getElementById('fileLoading');
-            btn.disabled = true;
-            loading.classList.add('show');
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
 
-            const id = generateId();
-            
-            try {
-                const fileRecords = [];
-                
-                // Convert each file to base64 data URL and store in Realtime Database
-                for (let i = 0; i < selectedFiles.length; i++) {
-                    const file = selectedFiles[i];
-                    const dataUrl = await readFileAsBase64(file);
-                    
-                    fileRecords.push({
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        dataUrl: dataUrl
-                    });
-                }
-                
-                // Save everything in Realtime Database (no Storage needed)
-                await database.ref('shares/' + id).set({
-                    type: 'files',
-                    files: fileRecords,
-                    createdAt: Date.now(),
-                    expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+        // Cleanup old items (older than KEEP_DAYS)
+        function cleanupOld() {
+            const cutoff = Date.now() - (KEEP_DAYS * 24 * 60 * 60 * 1000);
+            feedRef.orderByChild('timestamp').endAt(cutoff).limitToLast(200).once('value').then((snap) => {
+                const updates = {};
+                snap.forEach((child) => {
+                    updates[child.key] = null;
                 });
-                
-                const link = buildShareUrl(id);
-                document.getElementById('fileLinkInput').value = link;
-                document.getElementById('fileShareLink').classList.add('show');
-                
-                const fileNames = selectedFiles.map(f => f.name).join(', ');
-                addToHistory('ملفات', fileNames);
-        
-            } catch (error) {
-                alert('خطأ في رفع الملفات: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                loading.classList.remove('show');
-            }
+                if (Object.keys(updates).length) {
+                    feedRef.update(updates);
+                }
+            }).catch(() => {});
         }
-
-        function readFileAsBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-        }
-
-        function buildShareUrl(id) {
-            return window.location.origin + window.location.pathname + '?id=' + id;
-        }
-
-        function copyLink(inputId) {
-            const input = document.getElementById(inputId);
-            input.select();
-            document.execCommand('copy');
-            
-            const btn = input.nextElementSibling;
-            const originalText = btn.textContent;
-            btn.textContent = '✅ تم النسخ';
-            setTimeout(() => btn.textContent = originalText, 2000);
-        }
-
-        function addToHistory(type, content) {
-            const item = {
-                type,
-                content,
-                time: new Date().toLocaleString('ar-SA')
-            };
-            
-            shareHistory.unshift(item);
-            if (shareHistory.length > 10) shareHistory.pop();
-            
-            localStorage.setItem('shareHistory', JSON.stringify(shareHistory));
-            updateHistoryDisplay();
-        }
-
-        function updateHistoryDisplay() {
-            const historyList = document.getElementById('historyList');
-            
-            if (shareHistory.length === 0) {
-                historyList.innerHTML = '<div class="empty-history">لا توجد مشاركات سابقة</div>';
-                return;
-            }
-            
-            historyList.innerHTML = shareHistory.map(item => `
-                <div class="history-item">
-                    <div class="history-item-type">${item.type === 'نص' ? '📝' : '📁'} ${item.type}</div>
-                    <div class="history-item-content">${escapeHtml(item.content)}</div>
-                    <div class="history-item-time">${item.time}</div>
-                </div>
-            `).join('');
-        }
+        cleanupOld();
     </script>
 </body>
 </html>
