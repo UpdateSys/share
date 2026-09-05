@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مشاركة الملفات والنصوص 3</title>
+    <title>مشاركة الملفات والنصوص 4</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -559,7 +559,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📤 مشاركة الملفات والنصوص 3</h1>
+        <h1>📤 مشاركة الملفات والنصوص 4</h1>
         <div class="live-badge"><span class="live-dot"></span> مباشر — كل ما يُنشر يظهر فوراً للجميع</div>
 
         <div id="offlineBanner" class="connection-banner">⚠️ تعذر الاتصال — يرجى التحقق من الإنترنت</div>
@@ -851,7 +851,7 @@
             let body = '';
             
             if (item.type === 'text' && item.text) {
-                body = `<div class="feed-text">${escapeHtml(item.text)}</div>`;
+                body = `<div class="feed-text">${linkify(escapeHtml(item.text))}</div>`;
             } else if (item.type === 'files' && item.files && item.files.length) {
                 body = `<div class="feed-files-title">📁 ${item.files.length} ملف</div>`;
                 item.files.forEach((file, i) => {
@@ -1141,6 +1141,27 @@
             const div = document.createElement('div');
             div.textContent = text == null ? '' : String(text);
             return div.innerHTML;
+        }
+
+        function linkify(text) {
+            const urlRegex = /(https?:\/\/[^\s<>"']+)|(www\.[^\s<>"']+)|((?!www\.)[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s<>"']*)?)/g;
+            
+            return text.replace(urlRegex, function(match) {
+                let url = match;
+                let display = match;
+                
+                if (/^www\./i.test(url)) {
+                    url = 'https://' + url;
+                } else if (!/^https?:\/\//i.test(url)) {
+                    url = 'http://' + url;
+                }
+                
+                if (url.length > 80) {
+                    display = url.substring(0, 45) + '...' + url.substring(url.length - 25);
+                }
+                
+                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="color:#667eea; text-decoration:underline; word-break:break-all;">' + display + '</a>';
+            });
         }
 
         // ============ INIT ============
