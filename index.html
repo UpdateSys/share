@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مشاركة الملفات والنصوص 2</title>
+    <title>مشاركة الملفات والنصوص 3</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -57,6 +57,84 @@
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
             100% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+        }
+
+        /* ============ STORAGE BAR ============ */
+        .storage-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .storage-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .storage-info strong {
+            color: #333;
+        }
+
+        .storage-bar-bg {
+            background: #e9e9f3;
+            height: 12px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .storage-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.5s ease, background 0.5s ease;
+            width: 0%;
+        }
+
+        .storage-percent {
+            font-size: 13px;
+            color: #777;
+            margin-top: 6px;
+            text-align: left;
+            direction: ltr;
+        }
+
+        .storage-warning {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #fff3e0;
+            color: #e65100;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .storage-warning.show {
+            display: block;
+        }
+
+        .storage-full {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .cleanup-notice {
+            display: none;
+            margin-bottom: 20px;
+            padding: 12px 15px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 10px;
+            font-size: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+        }
+
+        .cleanup-notice.show {
+            display: block;
         }
 
         .tabs {
@@ -442,12 +520,6 @@
             background: #f0f0f0;
         }
 
-        .feed-action-btn.danger:hover {
-            background: #ffebee;
-            color: #c62828;
-            border-color: #ffcdd2;
-        }
-
         .delete-password-input {
             width: 100%;
             padding: 10px;
@@ -487,10 +559,26 @@
 </head>
 <body>
     <div class="container">
-        <h1>📤 مشاركة الملفات والنصوص 2</h1>
+        <h1>📤 مشاركة الملفات والنصوص 3</h1>
         <div class="live-badge"><span class="live-dot"></span> مباشر — كل ما يُنشر يظهر فوراً للجميع</div>
 
         <div id="offlineBanner" class="connection-banner">⚠️ تعذر الاتصال — يرجى التحقق من الإنترنت</div>
+
+        <div id="cleanupNotice" class="cleanup-notice"></div>
+
+        <!-- Storage usage bar -->
+        <div class="storage-box">
+            <div class="storage-info">
+                <span>💾 <strong>مساحة التخزين المستخدمة:</strong> <span id="storageUsed">0</span></span>
+                <span>الحد: <span id="storageLimit">1 جيجابايت</span></span>
+            </div>
+            <div class="storage-bar-bg">
+                <div class="storage-bar-fill" id="storageBarFill"></div>
+            </div>
+            <div class="storage-percent" id="storagePercent">0%</div>
+            <div id="storageWarning" class="storage-warning">⚠️ القاعدة تقترب من الامتلاء — احذف بعض المشاركات القديمة</div>
+            <div id="storageFull" class="storage-warning storage-full">🚫 القاعدة ممتلئة تقريباً — لا يمكن نشر الملفات الجديدة. احذف بعض المشاركات</div>
+        </div>
 
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('text')">📝 كتابة نص</button>
@@ -504,6 +592,11 @@
 
                 <textarea id="textInput" placeholder="اكتب نصك هنا... سيظهر للجميع فوراً"></textarea>
                 <button class="btn btn-primary" onclick="publishText()" id="pubTextBtn">📤 نشر النص</button>
+
+                <div id="textLoading" class="loading">
+                    <div class="spinner"></div>
+                    جاري النشر...
+                </div>
             </div>
 
             <!-- File Tab -->
@@ -553,36 +646,173 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const feedRef = database.ref('feed');
+        const statsRef = database.ref('stats');
         // =========================================================
 
+        // ============ CONSTANTS ============
         const MAX_TEXT_LENGTH = 100000;
         const MAX_FILE_SIZE = 4 * 1024 * 1024;
-        const KEEP_DAYS = 7;
+        const BASE_STORAGE = 1 * 1024 * 1024 * 1024;      // 1 جيجابايت
+        const TRIGGER_CLEANUP = 850 * 1024 * 1024;         // ابدأ التنظيف عند 850 ميجابايت
+        const FREE_AMOUNT = 300 * 1024 * 1024;             // حرر 300 ميجابايت
+        const WARN_LEVEL = 800 * 1024 * 1024;              // تحذير عند 800 ميجابايت
+        const FULL_LEVEL = 950 * 1024 * 1024;              // منع الملفات عند 950 ميجابايت
+        const TEXT_OVERHEAD = 512;                         // حجم تقريبي للبيانات الوصفية لكل مشاركة
 
         let selectedFiles = [];
         let connected = true;
+        let currentBytes = 0;
+        let cleaningBusy = false;
 
         // ============ CONNECTION STATUS ============
-        const connectedRef = database.ref('.info/connected');
-        connectedRef.on('value', (snap) => {
+        database.ref('.info/connected').on('value', (snap) => {
             connected = snap.val();
-            if (!connected) {
-                document.getElementById('offlineBanner').style.display = 'block';
-            } else {
-                document.getElementById('offlineBanner').style.display = 'none';
+            document.getElementById('offlineBanner').style.display = connected ? 'none' : 'block';
+        });
+
+        // ============ STORAGE STATS ============
+        statsRef.on('value', (snap) => {
+            const s = snap.val() || {};
+            currentBytes = s.bytes || 0;
+            updateStorageBar();
+            if (s.lastCleanup && s.lastCleanup.time > (showCleanupAt || 0)) {
+                showCleanupNotice(s.lastCleanup.freed);
+                showCleanupAt = s.lastCleanup.time;
+                
             }
         });
+
+        let showCleanupAt = 0;
+
+        function showCleanupNotice(freedBytes) {
+            const el = document.getElementById('cleanupNotice');
+            el.textContent = '🧹 تنظيم تلقائي: وصلت القاعدة إلى حد المساحة — حُذفت أقدم المشاركات لتحرير ' + formatSize(freedBytes);
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 15000);
+        }
+
+        function updateStorageBar() {
+            const percent = Math.min(100, (currentBytes / BASE_STORAGE) * 100);
+            const fill = document.getElementById('storageBarFill');
+            const warn = document.getElementById('storageWarning');
+            const full = document.getElementById('storageFull');
+            const btn = document.getElementById('pubFileBtn');
+            const upload = document.querySelector('.file-upload');
+
+            fill.style.width = percent + '%';
+            
+            if (percent < 75) {
+                fill.style.background = '#2ecc71';
+                warn.classList.remove('show');
+                full.classList.remove('show');
+            } else if (percent < 90) {
+                fill.style.background = '#f39c12';
+                warn.classList.add('show');
+                full.classList.remove('show');
+                if (btn) btn.disabled = false;
+                if (upload) upload.style.opacity = '1';
+                document.querySelector('.file-upload').style.pointerEvents = 'auto';
+            } else {
+                fill.style.background = '#e74c3c';
+                warn.classList.add('show');
+                if (currentBytes >= FULL_LEVEL) {
+                    full.classList.add('show');
+                    if (btn) btn.disabled = true;
+                    if (upload) upload.style.opacity = '0.5';
+                    document.querySelector('.file-upload').style.pointerEvents = 'none';
+                } else {
+                    full.classList.remove('show');
+                }
+            }
+            
+            document.getElementById('storageUsed').textContent = formatSize(currentBytes);
+            document.getElementById('storagePercent').textContent = percent.toFixed(2) + '%';
+        }
+
+        function addBytes(delta) {
+            return statsRef.child('bytes').transaction((current) => {
+                return (current || 0) + delta;
+            });
+        }
+
+        // ============ AUTO CLEANUP ============
+        function estimatePostBytes(post) {
+            if (post.type === 'text') {
+                return new Blob([post.text || '']).size + TEXT_OVERHEAD;
+            } else if (post.type === 'files' && post.files) {
+                let sum = TEXT_OVERHEAD;
+                post.files.forEach(f => {
+                    sum += (f.dataUrl ? f.dataUrl.length : 0) + f.name.length + 200;
+                });
+                return sum;
+            }
+            return TEXT_OVERHEAD;
+        }
+
+        async function checkAndCleanup() {
+            if (cleaningBusy) return;
+            if (currentBytes < TRIGGER_CLEANUP) return;
+
+            // Lock to avoid multiple clients cleaning simultaneously
+            const lock = await statsRef.child('cleaning').transaction((v) => {
+                return v ? v : true;
+            }).then(r => r.committed).catch(() => false);
+            
+            if (!lock) return;
+            cleaningBusy = true;
+
+            try {
+                let freed = 0;
+                let guard = 0;
+
+                while (freed < FREE_AMOUNT && guard < 30) {
+                    guard++;
+                    
+                    const snap = await feedRef.orderByChild('timestamp').limitToFirst(10).once('value');
+                    if (!snap.exists()) break;
+
+                    const updates = {};
+                    const batch = [];
+                    snap.forEach((child) => {
+                        const post = child.val();
+                        const size = estimatePostBytes(post);
+                        batch.push({ key: child.key, size });
+                        updates[child.key] = null;
+                    });
+
+                    if (batch.length === 0) break;
+
+                    await feedRef.update(updates);
+                    
+                    let batchFreed = 0;
+                    batch.forEach(b => batchFreed += b.size);
+                    freed += batchFreed;
+                    await addBytes(-batchFreed);
+                    currentBytes -= batchFreed;
+                    updateStorageBar();
+                }
+
+                await statsRef.update({
+                    cleaning: false,
+                    lastCleanup: {
+                        time: Date.now(),
+                        freed: freed
+                    }
+                });
+                showCleanupNotice(freed);
+                showCleanupAt = Date.now();
+            } catch (e) {
+                console.error('Cleanup error:', e);
+                await statsRef.child('cleaning').set(false).catch(() => {});
+            } finally {
+                cleaningBusy = false;
+            }
+        }
 
         // ============ LIVE FEED LISTENER ============
         feedRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
             renderFeed(snapshot);
         });
-
-        handleRootListener();
-
-        function handleRootListener() {
-            database.ref('.info/serverTimeOffset').once('value').catch(() => {});
-        }
 
         function renderFeed(snapshot) {
             const feed = document.getElementById('feed');
@@ -594,17 +824,13 @@
                 return;
             }
             
-            // Build items array sorted by timestamp (newest last, newest first in display)
             const items = [];
             snapshot.forEach((child) => {
-                items.push({ key: child.key, ...child.val() });
+                const val = child.val();
+                items.push({ key: child.key, ...val });
             });
             
-            // Remove expired items from display and optionally from database
-            const now = Date.now();
-            const validItems = items.filter(item => !item.expires || item.expires > now);
-            
-            // Sort newest first
+            const validItems = items.filter(item => item.type === 'text' || item.type === 'files');
             validItems.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
             count.textContent = validItems.length;
@@ -661,7 +887,6 @@
                         <button class="feed-action-btn" onclick="toggleDelete('${item.key}')">🗑️ حذف</button>
                     </div>
                     <div id="deleteBox_${item.key}" style="display:none;">
-                        <input type="password" class="delete-password-input" id="delPass_${item.key}" placeholder="كلمة المرور للمشرف (اختياري — اتركه فارغاً للحذف الفوري)">
                         <button class="btn btn-primary" style="margin-top:10px; background:#e74c3c;" onclick="deleteItem('${item.key}')">تأكيد الحذف</button>
                     </div>
                 </div>
@@ -674,18 +899,19 @@
         }
 
         function deleteItem(key) {
-            const pass = document.getElementById('delPass_' + key)?.value || '';
-            if (pass && pass !== ADMIN_PASSWORD) {
-                alert('كلمة المرور غير صحيحة');
-                return;
-            }
-            
-            if (pass !== ADMIN_PASSWORD && !pass) {
-                // Allow anyone to delete their own posts - for now allow delete (test mode)
-            }
-            
-            feedRef.child(key).remove().then(() => {
-                alert('تم الحذف');
+            feedRef.child(key).once('value').then((snap) => {
+                const data = snap.val();
+                const size = data ? estimatePostBytes(data) : 0;
+                
+                return feedRef.child(key).remove().then(() => {
+                    if (size > 0) {
+                        addBytes(-size);
+                        currentBytes -= size;
+                        updateStorageBar();
+                    }
+                    alert('تم الحذف');
+                    checkAndCleanup();
+                });
             }).catch((err) => {
                 alert('فشل الحذف: ' + err.message);
             });
@@ -705,9 +931,6 @@
             });
         }
 
-        // If you want a real admin password, change this and add a delete flow
-        const ADMIN_PASSWORD = '';
-
         // ============ PUBLISH TEXT ============
         function publishText() {
             const text = document.getElementById('textInput').value.trim();
@@ -721,20 +944,30 @@
             }
             
             const btn = document.getElementById('pubTextBtn');
+            const loading = document.getElementById('textLoading');
             btn.disabled = true;
+            loading.classList.add('show');
             
             const name = getSafeName(document.getElementById('textName').value);
-            
-            feedRef.push({
+            const post = {
                 type: 'text',
                 text: text,
                 name: name,
-                timestamp: Date.now(),
-                expires: Date.now() + (KEEP_DAYS * 24 * 60 * 60 * 1000)
+                timestamp: Date.now()
+            };
+            const bytes = estimatePostBytes(post);
+            
+            feedRef.push(post).then(() => {
+                return addBytes(bytes);
             }).then(() => {
+                currentBytes += bytes;
                 document.getElementById('textInput').value = '';
+                loading.classList.remove('show');
                 btn.disabled = false;
+                updateStorageBar();
+                return checkAndCleanup();
             }).catch((err) => {
+                loading.classList.remove('show');
                 btn.disabled = false;
                 alert('فشل النشر: ' + err.message);
             });
@@ -743,6 +976,12 @@
         // ============ PUBLISH FILES ============
         async function publishFiles() {
             if (selectedFiles.length === 0) return;
+            
+            // Block new file uploads if near full
+            if (currentBytes >= FULL_LEVEL) {
+                alert('🚫 القاعدة ممتلئة تقريباً — احذف بعض المشاركات أولاً');
+                return;
+            }
             
             const btn = document.getElementById('pubFileBtn');
             const loading = document.getElementById('fileLoading');
@@ -763,22 +1002,28 @@
                 }
                 
                 const name = getSafeName(document.getElementById('fileName').value);
-                
-                await feedRef.push({
+                const post = {
                     type: 'files',
                     files: fileRecords,
                     name: name,
-                    timestamp: Date.now(),
-                    expires: Date.now() + (KEEP_DAYS * 24 * 60 * 60 * 1000)
-                });
+                    timestamp: Date.now()
+                };
+                const bytes = estimatePostBytes(post);
+                
+                await feedRef.push(post);
+                await addBytes(bytes);
+                currentBytes += bytes;
+                updateStorageBar();
                 
                 selectedFiles = [];
                 displayFiles();
-            } catch (err) {
-                alert('فشل رفع الملفات: ' + err.message);
-            } finally {
-                btn.disabled = false;
                 loading.classList.remove('show');
+                btn.disabled = false;
+                await checkAndCleanup();
+            } catch (err) {
+                loading.classList.remove('show');
+                btn.disabled = false;
+                alert('فشل رفع الملفات: ' + err.message);
             }
         }
 
@@ -822,6 +1067,7 @@
             }
             
             shareBtn.style.display = 'block';
+            updateStorageBar();
             fileList.innerHTML = selectedFiles.map((file, index) => `
                 <div class="file-item">
                     <div class="file-info">
@@ -852,7 +1098,6 @@
             }
         }
 
-        // Drag and drop
         const fileUpload = document.querySelector('.file-upload');
         
         fileUpload.addEventListener('dragover', (e) => {
@@ -882,7 +1127,8 @@
         function formatSize(bytes) {
             if (bytes < 1024) return bytes + ' بايت';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' كيلوبايت';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' ميجابايت';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' ميجابايت';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' جيجابايت';
         }
 
         function formatTime(ts) {
@@ -897,20 +1143,10 @@
             return div.innerHTML;
         }
 
-        // Cleanup old items (older than KEEP_DAYS)
-        function cleanupOld() {
-            const cutoff = Date.now() - (KEEP_DAYS * 24 * 60 * 60 * 1000);
-            feedRef.orderByChild('timestamp').endAt(cutoff).limitToLast(200).once('value').then((snap) => {
-                const updates = {};
-                snap.forEach((child) => {
-                    updates[child.key] = null;
-                });
-                if (Object.keys(updates).length) {
-                    feedRef.update(updates);
-                }
-            }).catch(() => {});
-        }
-        cleanupOld();
+        // ============ INIT ============
+        statsRef.once('value', () => {
+            checkAndCleanup();
+        });
     </script>
 </body>
 </html>
