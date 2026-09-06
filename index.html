@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مشاركة الملفات والنصوص 4</title>
+    <title>مشاركة الملفات والنصوص 6</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -520,6 +520,154 @@
             background: #f0f0f0;
         }
 
+        .feed-social {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .like-btn {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .like-btn:hover {
+            background: #ffeaea;
+            border-color: #ffb3b3;
+        }
+
+        .like-btn.liked {
+            background: #ffeaea;
+            border-color: #ff6b6b;
+        }
+
+        .like-count {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .like-btn.liked .like-count {
+            color: #e74c3c;
+        }
+
+        .comment-toggle-btn {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .comment-toggle-btn:hover {
+            background: #eef1ff;
+            border-color: #b6c0ff;
+        }
+
+        .comment-count {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .comments-box {
+            margin-top: 10px;
+            padding: 12px;
+            background: #f7f7fc;
+            border-radius: 10px;
+        }
+
+        .comments-list {
+            max-height: 220px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .comment-item {
+            padding: 8px 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .comment-item-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-left: 6px;
+        }
+
+        .comment-item-text {
+            color: #333;
+            word-break: break-word;
+        }
+
+        .comment-item-time {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .comment-empty {
+            color: #999;
+            font-size: 13px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .comment-form-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-name-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            direction: rtl;
+        }
+
+        .comment-text-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            direction: rtl;
+        }
+
+        .comment-send-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .comment-send-btn:hover {
+            opacity: 0.9;
+        }
+
         .delete-password-input {
             width: 100%;
             padding: 10px;
@@ -559,7 +707,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📤 مشاركة الملفات والنصوص 4</h1>
+        <h1>📤 مشاركة الملفات والنصوص 6</h1>
         <div class="live-badge"><span class="live-dot"></span> مباشر — كل ما يُنشر يظهر فوراً للجميع</div>
 
         <div id="offlineBanner" class="connection-banner">⚠️ تعذر الاتصال — يرجى التحقق من الإنترنت</div>
@@ -658,11 +806,23 @@
         const WARN_LEVEL = 800 * 1024 * 1024;              // تحذير عند 800 ميجابايت
         const FULL_LEVEL = 950 * 1024 * 1024;              // منع الملفات عند 950 ميجابايت
         const TEXT_OVERHEAD = 512;                         // حجم تقريبي للبيانات الوصفية لكل مشاركة
+        const DELETE_PASSWORD = " ";                    // كلمة المرور المطلوبة للحذف
 
         let selectedFiles = [];
         let connected = true;
         let currentBytes = 0;
         let cleaningBusy = false;
+
+        let browserId = null;
+        try {
+            browserId = localStorage.getItem('shareBrowserId');
+            if (!browserId) {
+                browserId = 'u' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('shareBrowserId', browserId);
+            }
+        } catch (e) {
+            browserId = 'tmp' + Math.random().toString(36).substr(2, 9);
+        }
 
         // ============ CONNECTION STATUS ============
         database.ref('.info/connected').on('value', (snap) => {
@@ -736,17 +896,28 @@
         }
 
         // ============ AUTO CLEANUP ============
+        function estimateCommentsSize(comments) {
+            if (!comments) return 0;
+            let sum = 0;
+            Object.keys(comments).forEach(k => {
+                const c = comments[k] || {};
+                sum += (c.text ? c.text.length : 0) + (c.name ? c.name.length : 0) + 200;
+            });
+            return sum;
+        }
+
         function estimatePostBytes(post) {
+            const commentsBytes = estimateCommentsSize(post.comments);
             if (post.type === 'text') {
-                return new Blob([post.text || '']).size + TEXT_OVERHEAD;
+                return new Blob([post.text || '']).size + TEXT_OVERHEAD + commentsBytes;
             } else if (post.type === 'files' && post.files) {
                 let sum = TEXT_OVERHEAD;
                 post.files.forEach(f => {
                     sum += (f.dataUrl ? f.dataUrl.length : 0) + f.name.length + 200;
                 });
-                return sum;
+                return sum + commentsBytes;
             }
-            return TEXT_OVERHEAD;
+            return TEXT_OVERHEAD + commentsBytes;
         }
 
         async function checkAndCleanup() {
@@ -871,7 +1042,25 @@
             }
             
             const typeBadge = item.type === 'text' ? 'نص' : 'ملفات';
-            
+
+            const liked = item.likedBy && item.likedBy[browserId] ? true : false;
+            const likes = item.likes || 0;
+            const commentsObj = item.comments || {};
+            const commentKeys = Object.keys(commentsObj);
+            const commentCount = commentKeys.length;
+            const commentsHtml = commentKeys.length
+                ? commentKeys.map(k => {
+                    const c = commentsObj[k] || {};
+                    return `
+                        <div class="comment-item">
+                            <span class="comment-item-name">${escapeHtml(c.name || 'زائر')}</span>
+                            <span class="comment-item-text">${escapeHtml(c.text || '')}</span>
+                            <span class="comment-item-time">${formatTime(c.timestamp)}</span>
+                        </div>
+                    `;
+                }).join('')
+                : '<div class="comment-empty">لا توجد تعليقات — كن أول من يعلق 💬</div>';
+
             return `
                 <div class="feed-card" data-key="${item.key}">
                     <div class="feed-header">
@@ -883,6 +1072,25 @@
                         <span class="feed-time">${time}</span>
                     </div>
                     ${body}
+                    <div class="feed-social">
+                        <button class="like-btn ${liked ? 'liked' : ''}" onclick="toggleLike('${item.key}')">
+                            <span>${liked ? '❤️' : '🤍'}</span>
+                            <span class="like-count">${likes}</span>
+                        </button>
+                        <button class="comment-toggle-btn" onclick="toggleComments('${item.key}')">
+                            💬 <span class="comment-count">${commentCount}</span>
+                        </button>
+                    </div>
+                    <div id="comments_${item.key}" class="comments-box" style="display:none;">
+                        <div class="comments-list">${commentsHtml}</div>
+                        <div class="comment-form">
+                            <input type="text" class="comment-name-input" id="commentName_${item.key}" placeholder="اسمك (اختياري)" maxlength="40">
+                            <div class="comment-form-row">
+                                <input type="text" class="comment-text-input" id="commentText_${item.key}" placeholder="اكتب تعليقاً..." maxlength="500">
+                                <button class="comment-send-btn" onclick="sendComment('${item.key}')">إرسال</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="feed-actions">
                         <button class="feed-action-btn" onclick="toggleDelete('${item.key}')">🗑️ حذف</button>
                     </div>
@@ -899,6 +1107,13 @@
         }
 
         function deleteItem(key) {
+            const pass = prompt('أدخل كلمة المرور للحذف:');
+            if (pass === null) return;
+            if (pass !== DELETE_PASSWORD) {
+                alert('كلمة المرور غير صحيحة');
+                return;
+            }
+
             feedRef.child(key).once('value').then((snap) => {
                 const data = snap.val();
                 const size = data ? estimatePostBytes(data) : 0;
@@ -928,6 +1143,60 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+            });
+        }
+
+        // ============ LIKES ============
+        function toggleLike(key) {
+            feedRef.child(key).transaction((post) => {
+                if (post === null) return null;
+                const likedBy = post.likedBy || {};
+                const isLiked = !!likedBy[browserId];
+                const likes = (post.likes || 0) + (isLiked ? -1 : 1);
+                if (isLiked) {
+                    delete likedBy[browserId];
+                } else {
+                    likedBy[browserId] = true;
+                }
+                return { ...post, likes, likedBy };
+            }).catch((err) => {
+                alert('فشل تحديث الإعجاب: ' + err.message);
+            });
+        }
+
+        // ============ COMMENTS ============
+        function toggleComments(key) {
+            const box = document.getElementById('comments_' + key);
+            if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function sendComment(key) {
+            const nameInput = document.getElementById('commentName_' + key);
+            const textInput = document.getElementById('commentText_' + key);
+            const name = getSafeName(nameInput ? nameInput.value : '');
+            const text = (textInput ? textInput.value : '').trim();
+            
+            if (!text) {
+                alert('اكتب تعليقاً أولاً');
+                return;
+            }
+            if (text.length > 500) {
+                alert('التعليق طويل جداً (الحد الأقصى 500 حرف)');
+                return;
+            }
+            
+            feedRef.child(key).child('comments').push({
+                name: name,
+                text: text,
+                timestamp: Date.now()
+            }).then(() => {
+                if (textInput) textInput.value = '';
+                const bytes = text.length + name.length + 200;
+                addBytes(bytes);
+                currentBytes += bytes;
+                updateStorageBar();
+            }).catch((err) => {
+                alert('فشل إرسال التعليق: ' + err.message);
             });
         }
 
